@@ -1,0 +1,14 @@
+{
+  "name": "mimo-kassy-api-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Клиентское API сервиса записи на кулинарные классы студии «Шеф-стол» (многофайловый OpenAPI)",
+  "scripts": {
+    "lint": "redocly lint",
+    "preview": "redocly preview-docs",
+    "bundle": "for d in auth slots bookings profile chefs; do redocly bundle $d -o dist/$d.yaml; done"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.0"
+  }
+}

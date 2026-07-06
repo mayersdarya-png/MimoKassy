@@ -1,0 +1,20 @@
+# Реестр доменных OpenAPI-документов кулинарной студии «Шеф-стол».
+# Каждый домен — самодостаточный api.yaml (paths) + models.yaml (components),
+# связанные относительными $ref. Рендер/валидация — через @redocly/cli.
+
+apis:
+  auth:
+    root: auth/api.yaml
+  slots:
+    root: slots/api.yaml
+  bookings:
+    root: bookings/api.yaml
+  profile:
+    root: profile/api.yaml
+  chefs:
+    root: chefs/api.yaml
+
+rules:
+  no-unresolved-refs: error
+  no-unused-components: warn
+  operation-operationId-unique: error

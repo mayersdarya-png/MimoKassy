@@ -1,0 +1,34 @@
+# Шеф — справочный объект (read-only) + список шефов.
+
+components:
+  schemas:
+    Chef:
+      type: object
+      description: Шеф, ведущий кулинарный класс.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор шефа.
+        name:
+          type: string
+          description: Имя шефа.
+          example: Анна
+
+    ChefListResponse:
+      type: object
+      description: Постраничный список шефов (справочник для фильтра, BS-001).
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          description: Элементы списка шефов.
+          items:
+            $ref: '#/components/schemas/Chef'
+        meta:
+          $ref: '../common/models.yaml#/components/schemas/PaginationMeta'

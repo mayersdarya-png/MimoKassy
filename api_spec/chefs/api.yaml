@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Кулинарная студия «Шеф-стол» API — Chefs
+  description: |
+    Справочник шефов (read-only) для фильтра по шефу.
+    Часть клиентского API сервиса записи на кулинарные классы.
+  version: 1.0.0
+
+servers:
+  - url: https://api.shef-stol.example/v1
+    description: Production — продакшен-окружение
+  - url: https://staging-api.shef-stol.example/v1
+    description: Staging — тестовое окружение
+
+tags:
+  - name: Chefs
+    description: Справочник шефов
+
+security:
+  - bearerAuth: []
+
+paths:
+  /chefs:
+    get:
+      tags:
+        - Chefs
+      summary: Справочник шефов
+      operationId: listChefs
+      description: Список шефов для фильтра по шефу (BS-001). Read-only справочник.
+      parameters:
+        - $ref: '../common/models.yaml#/components/parameters/LimitParam'
+        - $ref: '../common/models.yaml#/components/parameters/OffsetParam'
+      responses:
+        "200":
+          description: Список шефов
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ChefListResponse'
+        "401":
+          $ref: '../common/models.yaml#/components/responses/Unauthorized'
+        default:
+          $ref: '../common.models.yaml#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '../auth/models.yaml#/components/securitySchemes/bearerAuth'

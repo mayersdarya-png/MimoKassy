@@ -1,0 +1,235 @@
+# Слот (сеанс класса) — read-only-проекция и его представления.
+
+components:
+  schemas:
+    ProgramType:
+      type: string
+      description: Тип программы — простая (simple) или сложная (complex).
+      enum:
+        - simple
+        - complex
+
+    SlotStatus:
+      type: string
+      description: Статус слота.
+      enum:
+        - scheduled
+        - cancelled
+
+    Program:
+      type: object
+      description: Программа кулинарного класса. Справочник, доступен только для чтения.
+      required:
+        - id
+        - name
+        - type
+        - capacity_cap
+        - duration_min
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор программы.
+        name:
+          type: string
+          description: Название программы.
+          example: Итальянская кухня
+        description:
+          type: string
+          nullable: true
+          description: Описание программы.
+          example: Классические рецепты итальянской кухни для новичков
+        type:
+          $ref: '#/components/schemas/ProgramType'
+        capacity_cap:
+          type: integer
+          description: Потолок числа мест на программе. Простая — 12, сложная — 8.
+          example: 12
+        duration_min:
+          type: integer
+          description: Продолжительность класса в минутах (обычно 180).
+          example: 180
+        menu_description:
+          type: string
+          description: Краткое описание блюд, которые готовятся на классе.
+          example: Паста Карбонара, Тирамису
+
+    Chef:
+      type: object
+      description: Шеф, ведущий класс.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор шефа.
+        name:
+          type: string
+          description: Имя шефа.
+          example: Анна
+
+    Slot:
+      type: object
+      description: |
+        Полная карточка слота (конкретный класс на дату/время). Доступен только для чтения.
+        Статус «Прошедшая» — производное значение по полю start_at, отдельным статусом не хранится.
+
+        Доступность:
+        - максимально доступное к брони число мест: max_seats = min(free_seats, program.capacity_cap, 3)
+        - число прокатных комплектов в брони ограничено: rental_count ≤ free_rental_kits
+        - своя экипировка занимает место (free_seats), но не расходует прокатный фонд (free_rental_kits)
+
+        Цены: price — тариф за место, rental_price — отдельный тариф проката за комплект экипировки, оба в рублях (валюта RUB).
+        Итоговая цена брони = price * seats_count + rental_price * rental_count
+
+        Инварианты: free_seats ≤ total_seats; счётчики и цены неотрицательны.
+      required:
+        - id
+        - start_at
+        - program
+        - chef
+        - total_seats
+        - free_seats
+        - free_rental_kits
+        - price
+        - rental_price
+        - studio_name
+        - studio_address
+        - studio_lat
+        - studio_lng
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор слота.
+        start_at:
+          type: string
+          format: date-time
+          description: Дата и время начала класса (UTC).
+        program:
+          $ref: '#/components/schemas/Program'
+        chef:
+          $ref: '#/components/schemas/Chef'
+        total_seats:
+          type: integer
+          minimum: 1
+          description: Общее число мест в слоте.
+          example: 12
+        free_seats:
+          type: integer
+          minimum: 0
+          description: |
+            Число свободных мест (расчётное). Своя экипировка клиента тоже занимает место.
+            К брони доступно max_seats = min(free_seats, program.capacity_cap, 3).
+          example: 5
+        free_rental_kits:
+          type: integer
+          minimum: 0
+          description: |
+            Число свободных прокатных комплектов экипировки (расчётное).
+            Ограничивает rental_count в брони (rental_count ≤ free_rental_kits).
+            Своя экипировка фонд не расходует.
+          example: 7
+        price:
+          type: integer
+          minimum: 0
+          description: Цена за одно место, в рублях (целое число, валюта RUB).
+          example: 3000
+        rental_price:
+          type: integer
+          minimum: 0
+          description: Тариф проката за один комплект экипировки, в рублях (целое число, валюта RUB).
+          example: 500
+        studio_name:
+          type: string
+          description: Название студии.
+          example: Шеф-стол
+        studio_address:
+          type: string
+          description: Адрес студии.
+          example: ул. Серпуховская, д. 12, лофт 3
+        studio_lat:
+          type: number
+          format: float
+          description: Широта студии (для карты).
+          example: 55.7558
+        studio_lng:
+          type: number
+          format: float
+          description: Долгота студии (для карты).
+          example: 37.6173
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+
+    SlotSummary:
+      type: object
+      description: Урезанное представление слота для списка (SCR-002).
+      required:
+        - id
+        - start_at
+        - program
+        - chef
+        - price
+        - rental_price
+        - total_seats
+        - free_seats
+        - free_rental_kits
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор слота.
+        start_at:
+          type: string
+          format: date-time
+          description: Дата и время начала класса.
+        program:
+          $ref: '#/components/schemas/Program'
+        chef:
+          $ref: '#/components/schemas/Chef'
+        price:
+          type: integer
+          minimum: 0
+          description: Цена за одно место, в рублях.
+          example: 3000
+        rental_price:
+          type: integer
+          minimum: 0
+          description: Тариф проката за один комплект экипировки.
+          example: 500
+        total_seats:
+          type: integer
+          minimum: 1
+          description: Общее число мест в слоте.
+          example: 12
+        free_seats:
+          type: integer
+          minimum: 0
+          description: Число свободных мест.
+          example: 5
+        free_rental_kits:
+          type: integer
+          minimum: 0
+          description: Число свободных прокатных комплектов.
+          example: 7
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+
+    SlotListResponse:
+      type: object
+      description: Постраничный список слотов (SCR-002).
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          description: Элементы списка слотов.
+          items:
+            $ref: '#/components/schemas/SlotSummary'
+        meta:
+          $ref: '../common/models.yaml#/components/schemas/PaginationMeta'
